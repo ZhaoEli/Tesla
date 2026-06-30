@@ -1,0 +1,48 @@
+<!--index.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">{{motto}}</text>
+    <text class="subtitle">智能车钥匙</text>
+  </view>
+
+  <view class="car-status">
+    <view class="status-dot {{carStatus === '在线' ? 'online' : 'offline'}}"></view>
+    <text class="status-text">{{carStatus}}</text>
+  </view>
+
+  <view class="control-area">
+    <view class="lock-btn {{locked ? 'locked' : 'unlocked'}}" bindtap="toggleLock">
+      <text class="lock-icon">{{locked ? '🔒' : '🔓'}}</text>
+      <text class="lock-text">{{locked ? '点击解锁' : '点击锁车'}}</text>
+    </view>
+  </view>
+
+  <view class="action-bar">
+    <view class="action-item" bindtap="checkCarStatus">
+      <text class="action-icon">🚗</text>
+      <text class="action-label">车辆状态</text>
+    </view>
+    <view class="action-item">
+      <text class="action-icon">❄️</text>
+      <text class="action-label">空调控制</text>
+    </view>
+    <view class="action-item">
+      <text class="action-icon">📍</text>
+      <text class="action-label">车辆定位</text>
+    </view>
+    <view class="action-item">
+      <text class="action-icon">🔋</text>
+      <text class="action-label">充电管理</text>
+    </view>
+  </view>
+
+  <view class="user-area" wx:if="{{!hasUserInfo}}">
+    <button wx:if="{{canIUseGetUserProfile}}" bindtap="getUserProfile" class="login-btn">
+      获取头像昵称
+    </button>
+  </view>
+  <view class="user-info" wx:else>
+    <image class="avatar" src="{{userInfo.avatarUrl}}" mode="cover"></image>
+    <text class="nickname">{{userInfo.nickName}}</text>
+  </view>
+</view>
