@@ -1,0 +1,10 @@
+{
+  "name": "controlVehicle",
+  "version": "1.0.0",
+  "description": "执行 Tesla 车辆控制命令",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "axios": "^1.6.0"
+  }
+}

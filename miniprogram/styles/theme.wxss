@@ -1,0 +1,81 @@
+/**
+ * Tesla 暗色主题 - Vant Weapp 自定义样式变量
+ *
+ * 在 app.wxss 中 @import 此文件即可全局生效
+ * Vant Weapp 支持通过 CSS 变量覆盖默认主题色
+ * 参考: https://vant-contrib.gitee.io/vant-weapp/#/theme
+ */
+
+/* ========== 品牌色 ========== */
+page {
+  /* Vant 主题变量覆盖 */
+  --button-primary-background-color: #e82127;
+  --button-primary-border-color: #e82127;
+  --button-info-background-color: #0f3460;
+  --button-info-border-color: #0f3460;
+  --button-default-background-color: rgba(255, 255, 255, 0.08);
+  --button-default-border-color: rgba(255, 255, 255, 0.2);
+  --button-default-color: #ffffff;
+
+  --switch-on-background-color: #e82127;
+  --switch-node-background-color: #ffffff;
+
+  --tag-primary-color: #e82127;
+
+  --cell-background-color: rgba(255, 255, 255, 0.06);
+  --cell-text-color: #ffffff;
+  --cell-label-color: rgba(255, 255, 255, 0.5);
+
+  --nav-bar-background-color: #1a1a2e;
+  --nav-bar-text-color: #ffffff;
+  --nav-bar-icon-color: #ffffff;
+
+  --dialog-background-color: #1a1a2e;
+  --dialog-foreground-color: #ffffff;
+
+  --notify-primary-background-color: #e82127;
+
+  --overlay-background-color: rgba(0, 0, 0, 0.7);
+
+  --field-input-text-color: #ffffff;
+  --field-label-color: rgba(255, 255, 255, 0.7);
+
+  --divider-border-color: rgba(255, 255, 255, 0.1);
+  --divider-color: rgba(255, 255, 255, 0.4);
+
+  --grid-item-content-background-color: rgba(255, 255, 255, 0.06);
+  --grid-item-content-active-color: rgba(255, 255, 255, 0.1);
+  --grid-item-text-color: #ffffff;
+
+  --toast-background-color: rgba(26, 26, 46, 0.9);
+
+  --action-sheet-item-background-color: #1a1a2e;
+  --action-sheet-item-color: #ffffff;
+
+  /* Tesla 专属品牌色 */
+  --tesla-red: #e82127;
+  --tesla-red-bg: rgba(232, 33, 39, 0.1);
+  --tesla-dark: #1a1a2e;
+  --tesla-blue: #0f3460;
+  --tesla-navy: #16213e;
+  --tesla-green: #00d084;
+  --tesla-green-bg: rgba(0, 208, 132, 0.15);
+  --tesla-orange: #ff9800;
+  --tesla-white: #ffffff;
+  --tesla-gray: rgba(255, 255, 255, 0.5);
+  --tesla-gray-light: rgba(255, 255, 255, 0.08);
+  --tesla-bg: #1a1a2e;
+  --tesla-card: rgba(255, 255, 255, 0.06);
+  --tesla-card-dark: #1c1c1e;
+  --tesla-border: rgba(255, 255, 255, 0.1);
+  --tesla-muted: rgba(255, 255, 255, 0.4);
+  --tesla-blue-accent: #3e63dd;
+  --tesla-blue-accent-bg: rgba(62, 99, 221, 0.3);
+
+  /* 字体大小 */
+  --tesla-font-xl: 80rpx;
+  --tesla-font-lg: 48rpx;
+  --tesla-font-md: 32rpx;
+  --tesla-font-sm: 28rpx;
+  --tesla-font-xs: 24rpx;
+}

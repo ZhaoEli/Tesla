@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Tesla Key - 登录页预览</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft Yahei', sans-serif; }
+
+    /* 手机外壳 */
+    .phone-frame {
+      width: 375px; height: 812px; border-radius: 44px; overflow: hidden;
+      border: 4px solid #333; background: #1a1a2e; position: relative;
+      box-shadow: 0 0 60px rgba(0,0,0,0.8), inset 0 0 2px rgba(255,255,255,0.1);
+    }
+    .phone-frame::before {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 150px; height: 28px; background: #000; border-radius: 0 0 18px 18px; z-index: 100;
+    }
+
+    /* 页面容器 */
+    .page {
+      height: 100%; overflow-y: auto; background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #fff; padding: 0 20px; display: flex; flex-direction: column;
+    }
+
+    /* 状态栏 */
+    .status-bar { height: 44px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; }
+    .status-bar span { font-size: 12px; color: #fff; font-weight: 600; }
+
+    /* 头部 */
+    .login-header { text-align: center; padding-top: 40px; padding-bottom: 20px; }
+    .logo-circle {
+      width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 16px;
+      background: rgba(232,33,39,0.1); border: 1px solid rgba(232,33,39,0.3);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-circle svg { width: 40px; height: 40px; fill: #e82127; }
+    .app-title { font-size: 28px; font-weight: bold; letter-spacing: 3px; display: block; margin-bottom: 6px; }
+    .app-subtitle { font-size: 14px; color: rgba(255,255,255,0.5); letter-spacing: 2px; }
+
+    /* 头像区 */
+    .avatar-area { text-align: center; padding: 30px 0 20px; }
+    .avatar-placeholder {
+      width: 70px; height: 70px; border-radius: 50%; margin: 0 auto 10px;
+      background: rgba(255,255,255,0.06); border: 1px dashed rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .avatar-placeholder svg { width: 36px; height: 36px; fill: rgba(255,255,255,0.2); }
+    .avatar-hint { font-size: 13px; color: rgba(255,255,255,0.4); }
+
+    /* 已登录头像 */
+    .avatar-real {
+      width: 70px; height: 70px; border-radius: 50%; margin: 0 auto 10px;
+      border: 2px solid rgba(255,255,255,0.2); object-fit: cover;
+    }
+    .nickname { font-size: 18px; font-weight: bold; display: block; margin-bottom: 8px; }
+    .login-tag {
+      display: inline-block; padding: 2px 12px; border-radius: 10px;
+      background: rgba(0,208,132,0.15); color: #00d084; font-size: 12px;
+    }
+
+    /* 功能说明 */
+    .features { display: flex; flex-wrap: wrap; justify-content: space-between; padding: 10px 0; }
+    .feature-item {
+      width: 48%; display: flex; align-items: center; padding: 12px 10px;
+      margin-bottom: 8px; background: rgba(255,255,255,0.06);
+      border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);
+    }
+    .feature-item svg { width: 20px; height: 20px; fill: #e82127; flex-shrink: 0; }
+    .feature-item span { font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 8px; }
+
+    /* 隐私协议 */
+    .privacy-area { display: flex; align-items: center; justify-content: center; padding: 16px 0 8px; }
+    .switch { position: relative; width: 36px; height: 20px; margin-right: 8px; cursor: pointer; }
+    .switch input { display: none; }
+    .switch .slider {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,0.2); border-radius: 10px; transition: 0.3s;
+    }
+    .switch .slider::before {
+      content: ''; position: absolute; width: 16px; height: 16px; left: 2px; bottom: 2px;
+      background: #fff; border-radius: 50%; transition: 0.3s;
+    }
+    .switch input:checked + .slider { background: #e82127; }
+    .switch input:checked + .slider::before { transform: translateX(16px); }
+    .privacy-text { font-size: 12px; color: rgba(255,255,255,0.5); }
+    .privacy-link { color: #e82127; cursor: pointer; }
+
+    /* 登录按钮 */
+    .login-actions { padding: 12px 0 20px; }
+    .btn-wechat {
+      width: 100%; height: 48px; border-radius: 24px; border: none;
+      background: #07c160; color: #fff; font-size: 16px; font-weight: 500;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn-wechat:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-wechat:not(:disabled):hover { opacity: 0.9; }
+    .btn-primary {
+      width: 100%; height: 48px; border-radius: 24px; border: none;
+      background: #e82127; color: #fff; font-size: 16px; font-weight: 500;
+      cursor: pointer; margin-bottom: 10px;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-outline {
+      width: 100%; height: 44px; border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.2); background: transparent;
+      color: rgba(255,255,255,0.5); font-size: 14px; cursor: pointer;
+    }
+
+    /* 信息卡片 */
+    .info-card {
+      background: rgba(255,255,255,0.06); border-radius: 12px;
+      margin: 8px 0 20px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden;
+    }
+    .info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-size: 14px; color: rgba(255,255,255,0.5); }
+    .info-value { font-size: 14px; color: #fff; }
+
+    /* 底部 */
+    .login-footer { text-align: center; padding: 20px 0; margin-top: auto; }
+    .version-text { font-size: 11px; color: rgba(255,255,255,0.2); }
+
+    /* 隐私弹窗 */
+    .dialog-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7); z-index: 200; justify-content: center; align-items: center;
+    }
+    .dialog-overlay.show { display: flex; }
+    .dialog-box {
+      width: 300px; background: #1a1a2e; border-radius: 16px; overflow: hidden;
+    }
+    .dialog-title { padding: 20px 20px 8px; font-size: 16px; font-weight: 600; text-align: center; }
+    .dialog-content { padding: 8px 20px 20px; font-size: 13px; line-height: 1.8; color: rgba(255,255,255,0.6); white-space: pre-line; max-height: 250px; overflow-y: auto; }
+    .dialog-btn {
+      width: 100%; height: 44px; border: none; background: transparent;
+      color: #e82127; font-size: 16px; border-top: 1px solid rgba(255,255,255,0.1); cursor: pointer;
+    }
+
+    /* 顶部通知 */
+    .notify {
+      position: fixed; top: 50px; left: 50%; transform: translateX(-50%);
+      padding: 8px 16px; border-radius: 8px; font-size: 13px; z-index: 300;
+      opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    }
+    .notify.success { background: rgba(0,208,132,0.9); }
+    .notify.warning { background: rgba(255,152,0,0.9); }
+    .notify.show { opacity: 1; }
+
+    /* 选中态 - 底部导航切换 */
+    .tab-bar { display: flex; padding: 8px; gap: 8px; }
+    .tab-btn {
+      flex: 1; padding: 8px 0; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+      background: transparent; color: rgba(255,255,255,0.5); font-size: 12px; cursor: pointer; text-align: center;
+    }
+    .tab-btn.active { background: rgba(232,33,39,0.15); border-color: #e82127; color: #e82127; }
+  </style>
+</head>
+<body>
+  <div class="phone-frame">
+    <div class="page" id="app">
+      <!-- 页面切换导航 -->
+      <div class="tab-bar" style="margin-top: 48px;">
+        <button class="tab-btn active" onclick="showPage('login')">登录页</button>
+        <button class="tab-btn" onclick="showPage('index')">首页</button>
+      </div>
+
+      <!-- 通知 -->
+      <div class="notify" id="notify"></div>
+
+      <!-- ===== 登录页 - 未登录 ===== -->
+      <div id="page-login">
+        <div class="login-header">
+          <div class="logo-circle">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.83-3.23 9.36-7 10.58-3.77-1.22-7-5.75-7-10.58V6.3l7-3.12zM11 7v6h2V7h-2zm0 8v2h2v-2h-2z"/></svg>
+          </div>
+          <span class="app-title">Tesla Key</span>
+          <span class="app-subtitle">智能车钥匙</span>
+        </div>
+
+        <div class="avatar-area" id="login-avatar">
+          <div class="avatar-placeholder">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>
+          <div class="avatar-hint">登录后解锁全部功能</div>
+        </div>
+
+        <!-- 已登录态（默认隐藏） -->
+        <div class="avatar-area" id="logged-avatar" style="display:none">
+          <img class="avatar-real" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect fill='%231a1a2e' width='80' height='80'/%3E%3Ccircle cx='40' cy='30' r='14' fill='%23e82127'/%3E%3Cellipse cx='40' cy='65' rx='22' ry='16' fill='%23e82127'/%3E%3C/svg%3E" alt="avatar" />
+          <span class="nickname" id="user-nickname">Tesla 车主</span>
+          <span class="login-tag">已登录</span>
+        </div>
+
+        <!-- 功能说明 -->
+        <div class="features">
+          <div class="feature-item">
+            <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+            <span>远程锁车/解锁</span>
+          </div>
+          <div class="feature-item">
+            <svg viewBox="0 0 24 24"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>
+            <span>空调温度控制</span>
+          </div>
+          <div class="feature-item">
+            <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            <span>车辆实时定位</span>
+          </div>
+          <div class="feature-item">
+            <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>电池充电管理</span>
+          </div>
+        </div>
+
+        <!-- 隐私协议 -->
+        <div class="privacy-area">
+          <label class="switch">
+            <input type="checkbox" id="privacy-check" onchange="updateLoginBtn()" />
+            <span class="slider"></span>
+          </label>
+          <span class="privacy-text">我已阅读并同意<span class="privacy-link" onclick="showPrivacy()">《隐私协议》</span></span>
+        </div>
+
+        <!-- 登录按钮 -->
+        <div class="login-actions" id="login-btn-area">
+          <button class="btn-wechat" id="login-btn" disabled onclick="doLogin()">微信一键登录</button>
+        </div>
+
+        <!-- 已登录操作（默认隐藏） -->
+        <div id="logged-actions" style="display:none">
+          <button class="btn-primary" onclick="enterHome()">进入主页</button>
+          <button class="btn-outline" onclick="doLogout()">退出登录</button>
+        </div>
+      </div>
+
+      <!-- ===== 首页 ===== -->
+      <div id="page-index" style="display:none">
+        <!-- 头部 -->
+        <div class="login-header" style="padding-top: 20px; padding-bottom: 10px;">
+          <span class="app-title">Tesla Key</span>
+          <div class="status-row" style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px;">
+            <div class="status-dot" style="width: 7px; height: 7px; border-radius: 50%; background: #ff6b6b;" id="status-dot"></div>
+            <span style="font-size: 13px; color: rgba(255,255,255,0.6);" id="car-status">离线</span>
+            <span style="display:inline-block; padding: 1px 8px; border-radius: 10px; border: 1px solid #e82127; color: #e82127; font-size: 11px; margin-left: 4px;">Model 3</span>
+          </div>
+        </div>
+
+        <!-- 用户卡片 -->
+        <div style="background: rgba(255,255,255,0.06); border-radius: 12px; margin: 8px 0; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; cursor: pointer;" id="index-user-card" onclick="showPage('login')">
+          <div id="index-avatar-ph" style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: rgba(255,255,255,0.3);"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>
+          <img id="index-avatar-real" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); margin-right: 12px; display: none;" src="" alt="avatar" />
+          <div style="flex: 1;">
+            <div id="index-username" style="font-size: 15px; color: #fff;">点击登录</div>
+            <div id="index-userdesc" style="font-size: 12px; color: rgba(255,255,255,0.4);">登录后解锁全部功能</div>
+          </div>
+          <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: rgba(255,255,255,0.3);"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </div>
+
+        <!-- 车辆信息 -->
+        <div style="background: rgba(255,255,255,0.06); border-radius: 12px; margin: 8px 0; padding: 16px; border: 1px solid rgba(255,255,255,0.1);">
+          <div style="display: flex; text-align: center;">
+            <div style="flex:1;"><div style="font-size: 22px; font-weight: bold; color: #00d084;">78%</div><div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px;">电量</div></div>
+            <div style="flex:1;"><div style="font-size: 22px; font-weight: bold;">22°C</div><div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px;">温度</div></div>
+            <div style="flex:1;"><div style="font-size: 22px; font-weight: bold;">12,345</div><div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px;">里程 km</div></div>
+          </div>
+        </div>
+
+        <!-- 锁车按钮 -->
+        <div style="text-align: center; padding: 30px 0;">
+          <div id="lock-circle" style="width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.2); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s;" onclick="toggleLock()">
+            <svg id="lock-icon" viewBox="0 0 24 24" style="width: 40px; height: 40px; fill: #fff;"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          </div>
+          <div id="lock-label" style="margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.5);">点击解锁</div>
+        </div>
+
+        <!-- 快捷操作 -->
+        <div style="background: rgba(255,255,255,0.06); border-radius: 12px; margin: 8px 0; padding: 16px; border: 1px solid rgba(255,255,255,0.1);">
+          <div style="display: flex; text-align: center;">
+            <div style="flex:1; padding: 8px; cursor: pointer;"><div style="font-size: 20px;">❄️</div><div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 6px;">空调</div></div>
+            <div style="flex:1; padding: 8px; cursor: pointer;"><div style="font-size: 20px;">📍</div><div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 6px;">定位</div></div>
+            <div style="flex:1; padding: 8px; cursor: pointer;"><div style="font-size: 20px;">🔋</div><div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 6px;">充电</div></div>
+            <div style="flex:1; padding: 8px; cursor: pointer;"><div style="font-size: 20px;">⚙️</div><div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 6px;">更多</div></div>
+          </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div style="padding: 16px 0 20px;">
+          <button id="index-lock-btn" class="btn-primary" onclick="toggleLock()">解锁车辆</button>
+        </div>
+      </div>
+
+      <!-- 底部 -->
+      <div class="login-footer">
+        <span class="version-text">Tesla Key v1.0.0 · 浏览器预览</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 隐私弹窗 -->
+  <div class="dialog-overlay" id="privacy-dialog">
+    <div class="dialog-box">
+      <div class="dialog-title">隐私协议</div>
+      <div class="dialog-content">我们将遵循微信平台隐私保护指引，对你的个人信息进行保护。
+
+1. 我们仅收集你的微信昵称和头像用于展示
+2. 你的登录凭证仅存储在本地
+3. 我们不会向第三方共享你的个人信息
+4. 你可以随时在设置中清除登录信息</div>
+      <button class="dialog-btn" onclick="hidePrivacy()">我知道了</button>
+    </div>
+  </div>
+
+  <script>
+    let isLoggedIn = false;
+    let isLocked = true;
+
+    function showPage(page) {
+      document.getElementById('page-login').style.display = page === 'login' ? 'block' : 'none';
+      document.getElementById('page-index').style.display = page === 'index' ? 'block' : 'none';
+      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', (i === 0 && page === 'login') || (i === 1 && page === 'index'));
+      });
+      updateIndexPage();
+    }
+
+    function updateLoginBtn() {
+      const checked = document.getElementById('privacy-check').checked;
+      document.getElementById('login-btn').disabled = !checked;
+    }
+
+    function showNotify(msg, type = 'success') {
+      const el = document.getElementById('notify');
+      el.textContent = msg;
+      el.className = 'notify ' + type + ' show';
+      setTimeout(() => el.classList.remove('show'), 2000);
+    }
+
+    function doLogin() {
+      const btn = document.getElementById('login-btn');
+      btn.textContent = '登录中...';
+      btn.disabled = true;
+      setTimeout(() => {
+        isLoggedIn = true;
+        document.getElementById('login-avatar').style.display = 'none';
+        document.getElementById('logged-avatar').style.display = 'block';
+        document.getElementById('login-btn-area').style.display = 'none';
+        document.getElementById('logged-actions').style.display = 'block';
+        showNotify('登录成功');
+      }, 1000);
+    }
+
+    function doLogout() {
+      isLoggedIn = false;
+      document.getElementById('login-avatar').style.display = 'block';
+      document.getElementById('logged-avatar').style.display = 'none';
+      document.getElementById('login-btn-area').style.display = 'block';
+      document.getElementById('logged-actions').style.display = 'none';
+      document.getElementById('privacy-check').checked = false;
+      updateLoginBtn();
+      showNotify('已退出登录', 'warning');
+    }
+
+    function enterHome() { showPage('index'); }
+
+    function updateIndexPage() {
+      if (isLoggedIn) {
+        document.getElementById('index-avatar-ph').style.display = 'none';
+        document.getElementById('index-avatar-real').style.display = 'block';
+        document.getElementById('index-avatar-real').src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"%3E%3Crect fill="%231a1a2e" width="80" height="80"/%3E%3Ccircle cx="40" cy="30" r="14" fill="%23e82127"/%3E%3Cellipse cx="40" cy="65" rx="22" ry="16" fill="%23e82127"/%3E%3C/svg%3E';
+        document.getElementById('index-username').textContent = 'Tesla 车主';
+        document.getElementById('index-userdesc').textContent = 'Tesla 车主';
+      } else {
+        document.getElementById('index-avatar-ph').style.display = 'flex';
+        document.getElementById('index-avatar-real').style.display = 'none';
+        document.getElementById('index-username').textContent = '点击登录';
+        document.getElementById('index-userdesc').textContent = '登录后解锁全部功能';
+      }
+    }
+
+    function toggleLock() {
+      isLocked = !isLocked;
+      const circle = document.getElementById('lock-circle');
+      const icon = document.getElementById('lock-icon');
+      const label = document.getElementById('lock-label');
+      const btn = document.getElementById('index-lock-btn');
+      if (isLocked) {
+        circle.style.background = 'rgba(255,255,255,0.08)';
+        circle.style.borderColor = 'rgba(255,255,255,0.2)';
+        circle.style.boxShadow = 'none';
+        icon.innerHTML = '<path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>';
+        icon.style.fill = '#fff';
+        label.textContent = '点击解锁';
+        btn.textContent = '解锁车辆';
+        showNotify('车辆已锁定', 'warning');
+      } else {
+        circle.style.background = 'rgba(0,208,132,0.15)';
+        circle.style.borderColor = '#00d084';
+        circle.style.boxShadow = '0 0 30px rgba(0,208,132,0.25)';
+        icon.innerHTML = '<path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>';
+        icon.style.fill = '#00d084';
+        label.textContent = '点击锁车';
+        btn.textContent = '锁定车辆';
+        showNotify('车辆已解锁');
+      }
+    }
+
+    function showPrivacy() { document.getElementById('privacy-dialog').classList.add('show'); }
+    function hidePrivacy() { document.getElementById('privacy-dialog').classList.remove('show'); }
+  </script>
+</body>
+</html>

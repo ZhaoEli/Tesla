@@ -1,48 +1,210 @@
-<!--index.wxml-->
-<view class="container">
-  <view class="header">
-    <text class="title">{{motto}}</text>
-    <text class="subtitle">智能车钥匙</text>
+<!-- index.wxml - v3 双面板切换模式 -->
+<view class="page-container">
+  <van-notify id="van-notify" />
+  <van-toast id="van-toast" />
+
+  <!-- ====== Dashboard 页面 ====== -->
+  <view class="page page-dashboard {{showSettings ? 'hidden' : ''}} {{isExpanded ? 'expand-active' : ''}}"
+    catchtouchstart="onTouchStart"
+    catchtouchmove="onTouchMove"
+    catchtouchend="onTouchEnd"
+  >
+    <view class="page-scroll">
+
+      <!-- 顶部 -->
+      <view class="top-bar">
+        <view class="top-left">
+          <text class="car-name">{{modelName}}</text>
+          <view class="status-row">
+            <view class="status-dot"></view>
+            <text class="status-text">已连接</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 续航 -->
+      <view class="range-area">
+        <text class="range-num">{{rangeKm}} km</text>
+        <view class="battery-row">
+          <van-icon name="success" size="28rpx" color="#00d084" />
+          <text class="battery-text">{{batteryLevel}}% 电量</text>
+        </view>
+      </view>
+
+      <!-- 车辆图片 -->
+      <view class="car-img-wrap" bindtap="goToVehicleDetail">
+        <image class="car-img" src="https://mdn.alipayobjects.com/huamei_wspxri/afts/img/A*8ZccSr5rSOYAAAAASSAAAAgAenh5AQ/fmt.webp" mode="widthFix" />
+      </view>
+
+      <!-- 位置卡片 -->
+      <view class="location-card" bindtap="goToLocation">
+        <view class="loc-icon-wrap">
+          <van-icon name="location-o" size="36rpx" color="#fff" />
+        </view>
+        <view class="loc-texts">
+          <text class="loc-title">当前位置</text>
+          <text class="loc-addr">{{locationText}}</text>
+        </view>
+      </view>
+
+      <!-- ===== 控制面板 ===== -->
+      <view class="ctrl-panel {{isExpanded ? 'expanded' : ''}}">
+        <view class="panel-handle" bindtap="toggleExpand">
+          <view class="handle-bar"></view>
+        </view>
+        <view class="panel-body">
+          <view class="panel-head">
+            <text class="panel-title">常用控制</text>
+            <text wx:if="{{isExpanded}}" class="panel-fold" bindtap="toggleExpand">收起</text>
+          </view>
+
+          <view wx:if="{{isExpanded}}" class="grid-2col">
+            <view class="ctrl-btn {{locked ? 'off' : 'on'}}" bindtap="toggleLock">
+              <view class="icon-circle {{locked ? '' : 'icon-on'}}">
+                <van-icon name="{{locked ? 'lock' : 'unlock'}}" size="36rpx" color="{{locked ? '#fff' : '#000'}}" />
+              </view>
+              <text class="ctrl-label {{locked ? '' : 'label-on'}}">{{locked ? '解锁' : '锁定'}}</text>
+            </view>
+            <view class="ctrl-btn {{climateOn ? 'on' : 'off'}}" bindtap="toggleClimate">
+              <view class="icon-circle {{climateOn ? 'icon-on' : ''}}">
+                <van-icon name="fire-o" size="36rpx" color="{{climateOn ? '#000' : '#fff'}}" />
+              </view>
+              <text class="ctrl-label {{climateOn ? 'label-on' : ''}}">空调</text>
+            </view>
+            <view class="ctrl-btn off">
+              <view class="icon-circle"><van-icon name="arrow-up" size="36rpx" color="#fff" /></view>
+              <text class="ctrl-label">后备箱</text>
+            </view>
+            <view class="ctrl-btn off">
+              <view class="icon-circle"><van-icon name="volume-o" size="36rpx" color="#fff" /></view>
+              <text class="ctrl-label">鸣笛</text>
+            </view>
+            <view class="ctrl-btn {{sentryOn ? 'on' : 'off'}}" bindtap="toggleSentry">
+              <view class="icon-circle {{sentryOn ? 'icon-on' : ''}}">
+                <van-icon name="shield-o" size="36rpx" color="{{sentryOn ? '#000' : '#fff'}}" />
+              </view>
+              <text class="ctrl-label {{sentryOn ? 'label-on' : ''}}">哨兵</text>
+            </view>
+            <view class="ctrl-btn {{windowsOpen ? 'on' : 'off'}}" bindtap="toggleWindows">
+              <view class="icon-circle {{windowsOpen ? 'icon-on' : ''}}">
+                <van-icon name="records" size="36rpx" color="{{windowsOpen ? '#000' : '#fff'}}" />
+              </view>
+              <text class="ctrl-label {{windowsOpen ? 'label-on' : ''}}">窗户</text>
+            </view>
+            <view class="ctrl-btn {{chargePortOpen ? 'on' : 'off'}}" bindtap="toggleChargePort">
+              <view class="icon-circle {{chargePortOpen ? 'icon-on' : ''}}">
+                <van-icon name="plus" size="36rpx" color="{{chargePortOpen ? '#000' : '#fff'}}" />
+              </view>
+              <text class="ctrl-label {{chargePortOpen ? 'label-on' : ''}}">{{chargePortOpen ? '关闭接口' : '开启接口'}}</text>
+            </view>
+          </view>
+
+          <view wx:else class="collapsed">
+            <view class="row-2btns">
+              <view class="ctrl-btn main-btn {{locked ? 'off' : 'on'}}" bindtap="toggleLock">
+                <view class="icon-circle {{locked ? '' : 'icon-on'}}">
+                  <van-icon name="{{locked ? 'lock' : 'unlock'}}" size="36rpx" color="{{locked ? '#fff' : '#000'}}" />
+                </view>
+                <text class="ctrl-label {{locked ? '' : 'label-on'}}">{{locked ? '解锁' : '锁定'}}</text>
+              </view>
+              <view class="ctrl-btn main-btn {{climateOn ? 'on' : 'off'}}" bindtap="toggleClimate">
+                <view class="icon-circle {{climateOn ? 'icon-on' : ''}}">
+                  <van-icon name="fire-o" size="36rpx" color="{{climateOn ? '#000' : '#fff'}}" />
+                </view>
+                <text class="ctrl-label {{climateOn ? 'label-on' : ''}}">空调</text>
+              </view>
+            </view>
+            <scroll-view class="scroll-x" scroll-x enhanced show-scrollbar="{{false}}">
+              <view class="x-btn off">
+                <van-icon name="arrow-up" size="36rpx" color="#fff" />
+                <text class="x-label">后备箱</text>
+              </view>
+              <view class="x-btn off">
+                <van-icon name="volume-o" size="36rpx" color="#fff" />
+                <text class="x-label">鸣笛</text>
+              </view>
+              <view class="x-btn {{sentryOn ? 'on' : 'off'}}" bindtap="toggleSentry">
+                <van-icon name="shield-o" size="36rpx" color="{{sentryOn ? '#000' : '#fff'}}" />
+                <text class="x-label {{sentryOn ? 'label-on' : ''}}">哨兵</text>
+              </view>
+              <view class="x-btn {{windowsOpen ? 'on' : 'off'}}" bindtap="toggleWindows">
+                <van-icon name="records" size="36rpx" color="{{windowsOpen ? '#000' : '#fff'}}" />
+                <text class="x-label {{windowsOpen ? 'label-on' : ''}}">窗户</text>
+              </view>
+              <view class="x-btn {{chargePortOpen ? 'on' : 'off'}}" bindtap="toggleChargePort">
+                <van-icon name="plus" size="36rpx" color="{{chargePortOpen ? '#000' : '#fff'}}" />
+                <text class="x-label {{chargePortOpen ? 'label-on' : ''}}">{{chargePortOpen ? '关闭' : '充电口'}}</text>
+              </view>
+            </scroll-view>
+          </view>
+        </view>
+      </view>
+
+      </view>
   </view>
 
-  <view class="car-status">
-    <view class="status-dot {{carStatus === '在线' ? 'online' : 'offline'}}"></view>
-    <text class="status-text">{{carStatus}}</text>
+  <!-- ====== 设置页面 ====== -->
+  <view class="page page-settings {{!showSettings ? 'hidden' : ''}}"
+    bindtouchstart="onTouchStart"
+    bindtouchmove="onTouchMove"
+    bindtouchend="onTouchEnd"
+  >
+    <view class="page-scroll">
+
+      <view class="set-header">
+        <view class="set-header-inner">
+          <view class="set-back" bindtap="swipeToDashboard">
+            <van-icon name="arrow-left" size="36rpx" color="#fff" />
+          </view>
+          <text class="set-title">设置</text>
+          <view class="set-back"></view>
+        </view>
+      </view>
+
+      <view class="set-body">
+        <view class="set-card">
+          <view class="set-card-head">
+            <text class="set-card-title">绑定特斯拉账号</text>
+            <text class="set-card-desc">请使用您的特斯拉账户登录，以便同步您的车辆信息与状态。</text>
+          </view>
+
+          <view wx:if="{{isTeslaBound}}" class="set-card-body">
+            <view class="bound-card">
+              <view class="bound-avatar"><van-icon name="contact" size="36rpx" color="#00d084" /></view>
+              <view>
+                <text class="bound-email">{{teslaEmail}}</text>
+                <text class="bound-sync"><view class="d-green"></view>已同步 {{vehicleCount}} 台车辆</text>
+              </view>
+            </view>
+            <view class="btn-refresh" bindtap="refreshTeslaData">刷新数据</view>
+            <view class="btn-unbind" bindtap="unbindTesla">解除账号绑定</view>
+          </view>
+
+          <view wx:else class="set-card-body">
+            <view class="oauth-intro">
+              <van-icon name="info-o" size="32rpx" color="rgba(255,255,255,0.5)" />
+              <text class="oauth-intro-text">点击下方按钮，跳转到 Tesla 官方登录页面完成授权</text>
+            </view>
+            <view class="btn-oauth" bindtap="startTeslaOAuth">
+              <van-icon name="shield-o" size="36rpx" color="#e82127" />
+              <text>绑定特斯拉账号</text>
+              <van-icon name="arrow" size="28rpx" color="rgba(255,255,255,0.3)" />
+            </view>
+            <view class="oauth-tips">
+              <text class="tip-item">• 使用 Tesla 官方账号授权登录，支持两步验证</text>
+              <text class="tip-item">• 支持远程锁车、空调、哨兵等控制</text>
+              <text class="tip-item">• 车辆数据通过 Tesla Fleet API 实时同步</text>
+            </view>
+          </view>
+
+          <view class="set-card-foot">
+            <view class="d-blue"></view>
+            <text class="foot-tip">特斯拉官方账号授权登录</text>
+          </view>
+        </view>
+      </view>
+
+      </view>
   </view>
 
-  <view class="control-area">
-    <view class="lock-btn {{locked ? 'locked' : 'unlocked'}}" bindtap="toggleLock">
-      <text class="lock-icon">{{locked ? '🔒' : '🔓'}}</text>
-      <text class="lock-text">{{locked ? '点击解锁' : '点击锁车'}}</text>
-    </view>
-  </view>
-
-  <view class="action-bar">
-    <view class="action-item" bindtap="checkCarStatus">
-      <text class="action-icon">🚗</text>
-      <text class="action-label">车辆状态</text>
-    </view>
-    <view class="action-item">
-      <text class="action-icon">❄️</text>
-      <text class="action-label">空调控制</text>
-    </view>
-    <view class="action-item">
-      <text class="action-icon">📍</text>
-      <text class="action-label">车辆定位</text>
-    </view>
-    <view class="action-item">
-      <text class="action-icon">🔋</text>
-      <text class="action-label">充电管理</text>
-    </view>
-  </view>
-
-  <view class="user-area" wx:if="{{!hasUserInfo}}">
-    <button wx:if="{{canIUseGetUserProfile}}" bindtap="getUserProfile" class="login-btn">
-      获取头像昵称
-    </button>
-  </view>
-  <view class="user-info" wx:else>
-    <image class="avatar" src="{{userInfo.avatarUrl}}" mode="cover"></image>
-    <text class="nickname">{{userInfo.nickName}}</text>
-  </view>
 </view>

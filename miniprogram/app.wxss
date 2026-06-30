@@ -1,10 +1,32 @@
 /**app.wxss**/
+@import './styles/theme.wxss';
+
+page {
+  background-color: var(--tesla-bg);
+  color: var(--tesla-white);
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica,
+    Segoe UI, Arial, Roboto, 'PingFang SC', 'miui', 'Hiragino Sans GB',
+    'Microsoft Yahei', sans-serif;
+}
+
 .container {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 200rpx 0;
   box-sizing: border-box;
+  background: linear-gradient(180deg, var(--tesla-dark) 0%, var(--tesla-navy) 50%, var(--tesla-blue) 100%);
+}
+
+/* 通用卡片样式 */
+.card {
+  background: var(--tesla-card);
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin: 16rpx 32rpx;
+  border: 1rpx solid var(--tesla-border);
+}
+
+/* 安全区域 */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
 }

@@ -1,0 +1,10 @@
+{
+  "name": "teslaAuth",
+  "version": "1.0.0",
+  "description": "Tesla OAuth 授权 - 获取并存储 Tesla access_token",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "axios": "^1.6.0"
+  }
+}

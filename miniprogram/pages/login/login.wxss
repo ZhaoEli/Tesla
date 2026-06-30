@@ -1,0 +1,269 @@
+/**login.wxss**/
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, var(--tesla-dark) 0%, var(--tesla-navy) 40%, var(--tesla-blue) 100%);
+  padding: 0 60rpx;
+  box-sizing: border-box;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 背景光效 */
+.login-page::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -20%;
+  width: 140%;
+  height: 140%;
+  opacity: 0.15;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(232, 33, 39, 0.3) 0%, transparent 70%);
+}
+
+/* ========== 头部 ========== */
+.login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 180rpx;
+  padding-bottom: 60rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.logo-area {
+  margin-bottom: 24rpx;
+}
+
+.logo-circle {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(20rpx);
+  border: 4rpx solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12rpx;
+}
+
+.logo-image {
+  width: 100%;
+  height: 100%;
+}
+
+.app-title {
+  font-size: 48rpx;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: 8rpx;
+  margin-bottom: 16rpx;
+}
+
+.app-subtitle {
+  font-size: 28rpx;
+  color: var(--tesla-gray);
+  letter-spacing: 2rpx;
+  opacity: 0.8;
+}
+
+/* ========== 未登录 - 头像区 ========== */
+.avatar-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx 0 60rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.avatar-placeholder {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2rpx dashed rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20rpx;
+}
+
+.avatar-hint {
+  font-size: 26rpx;
+  color: var(--tesla-muted);
+}
+
+/* ========== 功能说明（卡片化布局） ========== */
+.features {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.feature-item {
+  width: 48%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 28rpx 24rpx;
+  margin-bottom: 16rpx;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 20rpx;
+  border: 1rpx solid var(--tesla-border);
+}
+
+.feature-text {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.8);
+  margin-left: 16rpx;
+}
+
+/* ========== 隐私协议 ========== */
+.privacy-area {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx 0 16rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.privacy-switch {
+  margin-right: 12rpx !important;
+}
+
+.privacy-text {
+  font-size: 24rpx;
+  color: var(--tesla-gray);
+}
+
+.privacy-link {
+  color: var(--tesla-red);
+  font-size: 24rpx;
+}
+
+/* ========== 登录按钮 ========== */
+.login-actions {
+  padding: 24rpx 0 40rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.wechat-login-btn {
+  --button-primary-background-color: #07c160 !important;
+  --button-primary-border-color: #07c160 !important;
+  height: 100rpx !important;
+  font-size: 32rpx !important;
+  font-weight: 500 !important;
+  border-radius: 60rpx !important;
+}
+
+/* ========== 已登录 ========== */
+.logged-in-body {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.avatar-area.logged-in {
+  padding: 40rpx 0 24rpx;
+}
+
+.avatar-image {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+  border: 4rpx solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 20rpx;
+}
+
+.nickname {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.login-tag {
+  margin-top: 8rpx;
+}
+
+/* 信息卡片 */
+.info-card {
+  padding: 0;
+  margin: 16rpx 0 40rpx;
+}
+
+.info-card .van-cell {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+.info-card .van-cell__title {
+  color: var(--tesla-gray) !important;
+}
+
+.info-card .van-cell__value {
+  color: #ffffff !important;
+}
+
+/* 已登录按钮 */
+.logged-in-actions {
+  padding: 0 0 40rpx;
+}
+
+.enter-btn {
+  --button-primary-background-color: var(--tesla-red) !important;
+  --button-primary-border-color: var(--tesla-red) !important;
+  height: 96rpx !important;
+  font-size: 32rpx !important;
+  margin-bottom: 20rpx !important;
+  border-radius: 60rpx !important;
+}
+
+.logout-btn {
+  --button-danger-background-color: transparent !important;
+  --button-danger-border-color: var(--tesla-border) !important;
+  --button-danger-color: var(--tesla-gray) !important;
+  height: 88rpx !important;
+  font-size: 28rpx !important;
+}
+
+/* ========== 底部 ========== */
+.login-footer {
+  text-align: center;
+  padding: 40rpx 0 20rpx;
+  margin-top: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.version-text {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ========== 隐私弹窗 ========== */
+.privacy-dialog-content {
+  padding: 24rpx 32rpx;
+  max-height: 500rpx;
+  overflow-y: auto;
+}
+
+.privacy-dialog-text {
+  font-size: 26rpx;
+  line-height: 1.8;
+  color: #666;
+  white-space: pre-wrap;
+}

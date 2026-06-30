@@ -1,0 +1,95 @@
+/* oauthWebView.wxss */
+page {
+  background-color: #000;
+}
+
+.webview-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+}
+
+.webview-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 88rpx;
+  padding: 0 24rpx;
+  padding-top: var(--status-bar-height, 44px);
+  background: #1c1c1e;
+  flex-shrink: 0;
+}
+
+.nav-back {
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-title {
+  font-size: 32rpx;
+  color: #fff;
+  font-weight: 500;
+}
+
+.loading-mask {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: rgba(255,255,255,0.6);
+}
+
+.error-mask {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60rpx;
+  gap: 16rpx;
+}
+
+.error-title {
+  font-size: 32rpx;
+  color: #fff;
+  font-weight: 500;
+  margin-top: 24rpx;
+}
+
+.error-desc {
+  font-size: 26rpx;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 32rpx;
+}
+
+.error-actions {
+  display: flex;
+  gap: 24rpx;
+}
+
+.retry-btn {
+  background: #e82127 !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+.cancel-btn {
+  border-color: rgba(255,255,255,0.3) !important;
+  color: rgba(255,255,255,0.8) !important;
+}

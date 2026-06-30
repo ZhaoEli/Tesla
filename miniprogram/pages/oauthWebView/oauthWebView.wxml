@@ -1,0 +1,36 @@
+<!-- oauthWebView.wxml - Tesla OAuth 授权页 -->
+<view class="webview-page">
+  <view class="webview-nav">
+    <view class="nav-back" bindtap="onClose">
+      <van-icon name="cross" size="36rpx" color="#fff" />
+    </view>
+    <text class="nav-title">Tesla 账号授权</text>
+    <view class="nav-back"></view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-mask">
+    <van-loading type="spinner" color="#fff" size="48rpx" />
+    <text class="loading-text">正在打开 Tesla 登录页...</text>
+  </view>
+
+  <!-- web-view 承载 Tesla OAuth 页面 -->
+  <web-view
+    wx:if="{{authUrl}}"
+    src="{{authUrl}}"
+    bindmessage="onWebViewMessage"
+    bindload="onWebViewLoad"
+    binderror="onWebViewError"
+  ></web-view>
+
+  <!-- 加载失败时显示 -->
+  <view wx:if="{{showError}}" class="error-mask">
+    <van-icon name="warn-o" size="80rpx" color="#e82127" />
+    <text class="error-title">授权页面加载失败</text>
+    <text class="error-desc">{{errorMsg}}</text>
+    <view class="error-actions">
+      <van-button size="small" round custom-class="retry-btn" bindtap="onRetry">重试</van-button>
+      <van-button size="small" round plain type="danger" custom-class="cancel-btn" bindtap="onClose">取消</van-button>
+    </view>
+  </view>
+</view>

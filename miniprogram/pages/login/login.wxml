@@ -1,0 +1,133 @@
+<!--login.wxml-->
+<view class="login-page">
+  <van-notify id="van-notify" />
+  <van-toast id="van-toast" />
+
+  <!-- 顶部 Tesla Logo 区域 (复用 Muse Index 的设计) -->
+  <view class="login-header">
+    <view class="logo-area">
+      <view class="logo-circle">
+        <image
+          class="logo-image"
+          src="https://mdn.alipayobjects.com/huamei_ozdbwp/afts/img/_BhVR6YebKoAAAAAQOAAAAgADhU9AQJr/original?hm_biz=muse_style"
+          mode="aspectFit"
+        />
+      </view>
+    </view>
+    <text class="app-title">TESLA</text>
+    <text class="app-subtitle">科技引领未来出行</text>
+  </view>
+
+  <!-- 未登录状态 -->
+  <view class="login-body" wx:if="{{!isLoggedIn}}">
+    <!-- 功能说明 -->
+    <view class="features">
+      <view class="feature-item">
+        <van-icon name="lock" size="20px" color="#e82127" />
+        <text class="feature-text">远程锁车/解锁</text>
+      </view>
+      <view class="feature-item">
+        <van-icon name="fire-o" size="20px" color="#e82127" />
+        <text class="feature-text">空调温度控制</text>
+      </view>
+      <view class="feature-item">
+        <van-icon name="location-o" size="20px" color="#e82127" />
+        <text class="feature-text">车辆实时定位</text>
+      </view>
+      <view class="feature-item">
+        <van-icon name="chart-trending-o" size="20px" color="#e82127" />
+        <text class="feature-text">电池充电管理</text>
+      </view>
+    </view>
+
+    <!-- 隐私协议 -->
+    <view class="privacy-area">
+      <van-switch
+        size="18px"
+        checked="{{agreedPrivacy}}"
+        active-color="#e82127"
+        bind:change="onPrivacyChange"
+        custom-class="privacy-switch"
+      />
+      <text class="privacy-text" catchtap="onShowPrivacy">
+        我已阅读并同意<text class="privacy-link">《隐私协议》</text>
+      </text>
+    </view>
+
+    <!-- 微信登录按钮 (保留原绿色微信风格) -->
+    <view class="login-actions">
+      <van-button
+        type="primary"
+        block
+        round
+        loading="{{loading}}"
+        disabled="{{!agreedPrivacy}}"
+        custom-class="wechat-login-btn"
+        bindtap="onWechatLogin"
+      >
+        微信一键登录
+      </van-button>
+    </view>
+  </view>
+
+  <!-- 已登录状态 -->
+  <view class="logged-in-body" wx:if="{{isLoggedIn}}">
+    <view class="avatar-area logged-in">
+      <image class="avatar-image" src="{{userInfo.avatarUrl}}" mode="aspectFill" />
+      <text class="nickname">{{userInfo.nickName}}</text>
+      <van-tag type="success" size="large" custom-class="login-tag">已登录</van-tag>
+    </view>
+
+    <!-- 用户信息卡片 -->
+    <view class="card info-card">
+      <van-cell-group border="{{false}}">
+        <van-cell title="昵称" value="{{userInfo.nickName}}" border="{{true}}" />
+        <van-cell title="性别" value="{{userInfo.gender === 1 ? '男' : userInfo.gender === 2 ? '女' : '未知'}}" border="{{true}}" />
+        <van-cell title="城市" value="{{userInfo.city || '未设置'}}" border="{{true}}" />
+        <van-cell title="省份" value="{{userInfo.province || '未设置'}}" border="{{false}}" />
+      </van-cell-group>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="logged-in-actions">
+      <van-button
+        type="primary"
+        block
+        round
+        custom-class="enter-btn"
+        bindtap="navigateToIndex"
+      >
+        进入主页
+      </van-button>
+      <van-button
+        plain
+        block
+        round
+        type="danger"
+        custom-class="logout-btn"
+        bindtap="onLogout"
+      >
+        退出登录
+      </van-button>
+    </view>
+  </view>
+
+  <!-- 底部版本信息 -->
+  <view class="login-footer safe-area-bottom">
+    <text class="version-text">Tesla Key v1.0.0</text>
+  </view>
+
+  <!-- 隐私协议弹窗 -->
+  <van-dialog
+    use-slot
+    show="{{showPrivacyPopup}}"
+    title="隐私协议"
+    show-cancel-button="{{false}}"
+    confirm-button-text="我知道了"
+    bind:confirm="onClosePrivacy"
+  >
+    <view class="privacy-dialog-content">
+      <text class="privacy-dialog-text">{{privacyContent}}</text>
+    </view>
+  </van-dialog>
+</view>

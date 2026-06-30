@@ -6,6 +6,12 @@ miniAPPkey
 private-key.pem
 public-key.pem
 
+# 云函数密钥配置（包含 AppSecret、Tesla API 密钥等）
+cloud/config.js
+
+# 环境变量文件
+.env
+
 # Node.js
 node_modules/
 
