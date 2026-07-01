@@ -14,6 +14,7 @@ Page({
     rangeKm: 500,
     locationText: '获取中...',
     isOnline: false,
+    carStatus: 'sleeping', // sleeping(休眠) / waking(唤醒中) / parked(已驻车) / driving(行车中)
     odometerKm: 0,
 
     // 充电状态
@@ -33,12 +34,20 @@ Page({
     windowsOpen: false,
     chargePortOpen: false,
 
+    // 唤醒轮询
+    wakePollCount: 0,
+    wakePollTimer: null,
+    _pendingCommand: null, // 唤醒成功后待执行的命令 { command, params, label, onSuccess }
+
     // 数据更新时间
     dataUpdateTime: '',
 
     // 页面切换
     showSettings: false,
     isExpanded: false,
+
+    // 防重复点击
+    isCommandLoading: false,
 
     // 设置页 - Tesla 绑定状态
     isTeslaBound: false,
@@ -256,7 +265,7 @@ Page({
   },
 
   // ===== 从 Tesla Fleet API 获取车辆数据 =====
-  fetchVehicleData(vehicleId) {
+  fetchVehicleData(vehicleId, isWakePoll = false) {
     if (!this.data.isLoggedIn) return
 
     const openid = app.globalData.openid || wx.getStorageSync('openid')
@@ -290,12 +299,23 @@ Page({
         const odometerMi = vs.odometer || 0
         const odometerKm = odometerMi > 0 ? Math.round(odometerMi * 1.609) : 0
 
-        // 位置
+        // 判断车辆状态
+        const isOnline = v.state === 'online'
+        let carStatus = 'sleeping'
         let locationText = this.data.locationText
-        if (ds.latitude && ds.longitude) {
-          locationText = `${ds.latitude.toFixed(4)}, ${ds.longitude.toFixed(4)}`
-        } else if (ds.latitude == null && ds.longitude == null) {
-          // 没有位置数据，保留上次
+
+        if (isOnline) {
+          const hasLocation = ds.latitude != null && ds.longitude != null
+          if (hasLocation) {
+            carStatus = 'driving'
+            locationText = `${ds.latitude.toFixed(4)}, ${ds.longitude.toFixed(4)}`
+          } else {
+            carStatus = 'parked'
+            locationText = '已驻车'
+          }
+        } else {
+          carStatus = 'sleeping'
+          locationText = '休眠中'
         }
 
         const now = new Date()
@@ -318,62 +338,233 @@ Page({
           sentryOn: vs.sentry_mode ?? false,
           windowsOpen: vs.windows_open ?? false,
           chargePortOpen: cs.charge_port_door_open ?? false,
-          isOnline: v.state === 'online',
+          isOnline,
+          carStatus,
           odometerKm,
           locationText,
           dataUpdateTime: timeStr
         })
+
+        // 唤醒轮询：车辆已上线，停止轮询
+        if (isWakePoll && isOnline) {
+          this._clearWakePoll()
+          wx.showToast({ title: '车辆已唤醒', icon: 'success', duration: 2000 })
+          // 如果有待执行的命令，自动执行
+          if (this.data._pendingCommand) {
+            const cmd = this.data._pendingCommand
+            this.setData({ _pendingCommand: null })
+            setTimeout(() => {
+              this._executeCommand(cmd.command, cmd.params, cmd.label, cmd.onSuccess)
+            }, 500)
+          }
+        } else if (isWakePoll && !isOnline) {
+          // 车辆仍未上线，继续轮询
+          this._scheduleNextWakePoll()
+        }
       } else if (res.result && res.result.needAuth) {
         this.setData({ isTeslaBound: false })
         this.setMockData()
+        // 唤醒轮询中遇到需要授权也停止轮询
+        if (isWakePoll) {
+          this._onWakeFailed()
+        }
+      } else if (isWakePoll) {
+        // 获取数据失败（非 needAuth），继续轮询
+        console.log('[wakePoll] 获取数据失败，继续轮询:', res.result)
+        this._scheduleNextWakePoll()
       }
     }).catch(() => {
+      // 唤醒轮询中出错也继续尝试
+      if (isWakePoll) {
+        this._scheduleNextWakePoll()
+      }
       // 不降级到 mock，保留上次数据
     })
   },
 
   /**
-   * 唤醒车辆
+   * 唤醒车辆（仅休眠状态时使用）
+   * 流程：调用 wake_up API → 检查响应 → 轮询等待车辆上线
    */
   wakeUpVehicle() {
+    // 防止重复点击
+    if (this.data.carStatus === 'waking') {
+      return
+    }
+
+    // 没有 vehicleId 时先获取车辆列表
     if (!this.data.vehicleId) {
-      Notify({ type: 'warning', message: '没有车辆可唤醒' })
+      console.log('[wakeUpVehicle] vehicleId 为空，先获取车辆列表')
+      this.refreshVehicleData()
       return
     }
 
     // mock 车辆直接模拟唤醒成功
     if (this.data.vehicleId === 'mock') {
       Notify({ type: 'success', message: '车辆已唤醒' })
-      this.setData({ isOnline: true })
+      this.setData({ isOnline: true, carStatus: 'parked', locationText: '已驻车' })
       this.fetchVehicleData('mock')
+      // 执行待执行命令
+      if (this.data._pendingCommand) {
+        const cmd = this.data._pendingCommand
+        this.setData({ _pendingCommand: null })
+        setTimeout(() => {
+          this._executeCommand(cmd.command, cmd.params, cmd.label, cmd.onSuccess)
+        }, 500)
+      }
       return
     }
 
-    Toast.loading({ message: '正在唤醒车辆...', forbidClick: true, duration: 0 })
+    // 进入唤醒中状态，清除之前的轮询
+    this._clearWakePoll()
+    this.setData({
+      carStatus: 'waking',
+      locationText: '唤醒中...',
+      wakePollCount: 0
+    })
 
     const openid = app.globalData.openid || wx.getStorageSync('openid')
     wx.cloud.callFunction({
       name: 'controlVehicle',
       data: { openid, vehicleId: this.data.vehicleId, command: 'wake_up' }
     }).then(res => {
-      wx.hideLoading()
-      if (res.result && res.result.code === 0) {
-        Notify({ type: 'success', message: '车辆已唤醒' })
-        this.setData({ isOnline: true })
-        // 唤醒后再拉取一次数据
-        setTimeout(() => this.fetchVehicleData(this.data.vehicleId), 2000)
+      console.log('[wakeUpVehicle] controlVehicle 返回:', JSON.stringify(res.result))
+      const r = res.result || {}
+
+      if (r.code === -2) {
+        // 需要重新授权
+        this._onWakeFailed()
+        Notify({ type: 'warning', message: '授权已过期，请重新授权' })
+        return
+      }
+
+      if (r.code !== 0) {
+        // 接口报错
+        this._onWakeFailed()
+        Toast({ type: 'fail', message: r.message || '唤醒失败' })
+        return
+      }
+
+      // API 调用成功，开始轮询等待车辆上线
+      this._startWakePoll()
+    }).catch(() => {
+      // 网络异常，也尝试轮询（可能 API 已发出但响应丢失）
+      console.log('[wakeUpVehicle] 网络异常，开始轮询')
+      this._startWakePoll()
+    })
+  },
+
+  /**
+   * 确保车辆在线后执行命令（休眠时先唤醒）
+   */
+  ensureOnlineThen(command, params, label, onSuccess) {
+    if (this.data.carStatus === 'waking') return
+    if (this.data.carStatus === 'sleeping') {
+      // 保存待执行的命令，唤醒成功后自动执行
+      this.setData({ _pendingCommand: { command, params, label, onSuccess } })
+      this.wakeUpVehicle()
+      return
+    }
+    // 已在线，直接执行
+    this._executeCommand(command, params, label, onSuccess)
+  },
+
+  /**
+   * 实际执行命令
+   */
+  _executeCommand(command, params, label, onSuccess) {
+    this.setData({ isCommandLoading: true })
+    Toast.loading({ message: `${label}中...`, forbidClick: true, duration: 0 })
+
+    this.callControlCommand(command, params).then(res => {
+      Toast.clear()
+      if (res && res.code === 0) {
+        if (onSuccess) onSuccess()
+        this.setData({ isCommandLoading: false })
+        Notify({ type: 'success', message: `${label}成功` })
       } else {
-        Notify({ type: 'warning', message: res.result?.message || '唤醒失败' })
+        this.setData({ isCommandLoading: false })
+        this.showCommandError(res, `${label}失败`)
       }
     }).catch(() => {
-      wx.hideLoading()
-      Notify({ type: 'danger', message: '网络异常' })
+      Toast.clear()
+      this.setData({ isCommandLoading: false })
+      this.showCommandError(null, `${label}失败`)
     })
+  },
+
+  /**
+   * 开始轮询等待车辆上线（最多 15 次，每次间隔 3 秒，共 45 秒）
+   */
+  _startWakePoll() {
+    const INTERVAL = 3000
+
+    const poll = () => {
+      const count = this.data.wakePollCount + 1
+      this.setData({ wakePollCount: count })
+      console.log(`[wakePoll] 第 ${count} 次检查车辆状态...`)
+      this.fetchVehicleData(this.data.vehicleId, true)
+    }
+
+    // 首次等待 3 秒后开始轮询
+    const timer = setTimeout(poll, INTERVAL)
+    this.setData({ wakePollTimer: timer })
+  },
+
+  /**
+   * 唤醒失败/超时，恢复休眠状态
+   */
+  _onWakeFailed() {
+    this._clearWakePoll()
+    this.setData({
+      carStatus: 'sleeping',
+      locationText: '休眠中',
+      isOnline: false,
+      _pendingCommand: null
+    })
+  },
+
+  /**
+   * 清除轮询定时器
+   */
+  _clearWakePoll() {
+    if (this.data.wakePollTimer) {
+      clearTimeout(this.data.wakePollTimer)
+      this.setData({ wakePollTimer: null })
+    }
+  },
+
+  /**
+   * 安排下一次轮询（3 秒后）
+   */
+  _scheduleNextWakePoll() {
+    const MAX_POLL = 15
+    if (this.data.wakePollCount >= MAX_POLL) {
+      console.log('[wakePoll] 轮询超时')
+      this._onWakeFailed()
+      Toast({ type: 'fail', message: '唤醒超时，请稍后重试' })
+      return
+    }
+    const timer = setTimeout(() => {
+      this.fetchVehicleData(this.data.vehicleId, true)
+    }, 3000)
+    this.setData({ wakePollTimer: timer })
+  },
+
+  /**
+   * 点击顶部状态区域 - 仅休眠时可点击唤醒
+   */
+  onTapStatus() {
+    console.log('[onTapStatus] carStatus:', this.data.carStatus)
+    if (this.data.carStatus === 'sleeping') {
+      this.wakeUpVehicle()
+    }
   },
 
   setMockData() {
     this.setData({
       vehicleId: 'mock',
+      carStatus: 'parked',
       modelName: 'Model 3',
       batteryLevel: 78,
       rangeKm: 500,
@@ -411,7 +602,33 @@ Page({
     })
   },
 
+  toggleTrunk() {
+    if (!this.data.isLoggedIn) {
+      Notify({ type: 'warning', message: '请先登录' })
+      this.showLoginPrompt()
+      return
+    }
+    this.ensureOnlineThen('trunk_open', null, '开启后备箱')
+  },
+
+  toggleHorn() {
+    if (!this.data.isLoggedIn) {
+      Notify({ type: 'warning', message: '请先登录' })
+      this.showLoginPrompt()
+      return
+    }
+    this.ensureOnlineThen('honk_horn', null, '鸣笛')
+  },
+
   toggleLock() {
+    console.log('[toggleLock] 被调用, locked:', this.data.locked, 'isLoggedIn:', this.data.isLoggedIn, 'isCommandLoading:', this.data.isCommandLoading)
+
+    // 防重复点击
+    if (this.data.isCommandLoading) {
+      console.log('[toggleLock] 命令执行中，忽略重复点击')
+      return
+    }
+
     if (!this.data.isLoggedIn) {
       Notify({ type: 'warning', message: '请先登录' })
       this.showLoginPrompt()
@@ -421,19 +638,9 @@ Page({
     const command = targetLocked ? 'lock' : 'unlock'
     const label = targetLocked ? '锁车' : '解锁'
 
-    Toast.loading({ message: `${label}中...`, forbidClick: true, duration: 2000 })
-
-    this.callControlCommand(command).then(res => {
-      if (res && res.code === 0) {
-        this.setData({ locked: targetLocked })
-        Notify({ type: 'success', message: `车辆已${label}` })
-      } else {
-        this.setData({ locked: targetLocked })
-        Notify({ type: 'success', message: `车辆已${label}` })
-      }
-    }).catch(() => {
+    console.log('[toggleLock] 发送命令:', command, 'vehicleId:', this.data.vehicleId)
+    this.ensureOnlineThen(command, null, label, () => {
       this.setData({ locked: targetLocked })
-      Notify({ type: 'success', message: `车辆已${label}` })
     })
   },
 
@@ -447,19 +654,8 @@ Page({
     const command = target ? 'climate_on' : 'climate_off'
     const label = target ? '开启' : '关闭'
 
-    Toast.loading({ message: `${label}空调中...`, forbidClick: true, duration: 2000 })
-
-    this.callControlCommand(command).then(res => {
-      if (res && res.code === 0) {
-        this.setData({ climateOn: target })
-        Notify({ type: 'success', message: `空调已${label}` })
-      } else {
-        this.setData({ climateOn: target })
-        Notify({ type: 'success', message: `空调已${label}` })
-      }
-    }).catch(() => {
+    this.ensureOnlineThen(command, null, `${label}空调`, () => {
       this.setData({ climateOn: target })
-      Notify({ type: 'success', message: `空调已${label}` })
     })
   },
 
@@ -468,14 +664,8 @@ Page({
     const command = target ? 'sentry_on' : 'sentry_off'
     const label = target ? '开启' : '关闭'
 
-    Toast.loading({ message: `${label}哨兵模式中...`, forbidClick: true, duration: 2000 })
-
-    this.callControlCommand(command).then(res => {
+    this.ensureOnlineThen(command, null, `${label}哨兵模式`, () => {
       this.setData({ sentryOn: target })
-      Notify({ type: 'success', message: `哨兵模式已${label}` })
-    }).catch(() => {
-      this.setData({ sentryOn: target })
-      Notify({ type: 'success', message: `哨兵模式已${label}` })
     })
   },
 
@@ -484,14 +674,8 @@ Page({
     const command = target ? 'window_vent' : 'window_close'
     const label = target ? '开启' : '关闭'
 
-    Toast.loading({ message: `${label}窗户中...`, forbidClick: true, duration: 2000 })
-
-    this.callControlCommand(command).then(res => {
+    this.ensureOnlineThen(command, null, `${label}窗户`, () => {
       this.setData({ windowsOpen: target })
-      Notify({ type: 'success', message: `窗户已${label}` })
-    }).catch(() => {
-      this.setData({ windowsOpen: target })
-      Notify({ type: 'success', message: `窗户已${label}` })
     })
   },
 
@@ -500,19 +684,38 @@ Page({
     const command = target ? 'charge_port_open' : 'charge_port_close'
     const label = target ? '开启' : '关闭'
 
-    Toast.loading({ message: `${label}充电口中...`, forbidClick: true, duration: 2000 })
-
-    this.callControlCommand(command).then(res => {
+    this.ensureOnlineThen(command, null, `${label}充电口`, () => {
       this.setData({ chargePortOpen: target })
-      Notify({ type: 'success', message: `充电口已${label}` })
-    }).catch(() => {
-      this.setData({ chargePortOpen: target })
-      Notify({ type: 'success', message: `充电口已${label}` })
     })
   },
 
   goToVehicleDetail() { Toast('车辆详情 - 开发中') },
   goToLocation() { Toast('定位功能 - 开发中') },
+
+  /**
+   * 统一展示命令执行错误弹窗
+   */
+  showCommandError(res, title) {
+    let detail = ''
+    if (res) {
+      // Tesla API 返回的错误详情
+      const err = res.responseData?.error || res.error || ''
+      const desc = res.responseData?.error_description || ''
+      if (err) detail += `错误: ${err}`
+      if (desc) detail += `\n说明: ${desc}`
+      if (res.message) detail += `\n消息: ${res.message}`
+      if (res.statusCode) detail += `\nHTTP状态: ${res.statusCode}`
+    } else {
+      detail = '网络异常，请检查网络后重试'
+    }
+    wx.showModal({
+      title: title || '命令执行失败',
+      content: detail || '未知错误',
+      showCancel: false,
+      confirmText: '知道了',
+      confirmColor: '#e82127'
+    })
+  },
 
   // ===== 手势 =====
   // 改进：使用 catch 事件防止冒泡，增加滑动判定稳定性

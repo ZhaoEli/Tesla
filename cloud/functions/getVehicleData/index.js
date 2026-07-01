@@ -96,7 +96,8 @@ exports.main = async (event, context) => {
       `${FLEET_API_BASE}/api/1/vehicles/${vin}/vehicle_data`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
-        timeout: 30000
+        timeout: 30000,
+        params: { location_data: 'true' }
       }
     )
 

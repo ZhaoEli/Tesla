@@ -1,6 +1,7 @@
 /**
  * 云函数：车辆控制
- * 调用 Fleet API: POST /api/1/vehicles/{vehicle_id}/command/{command}
+ * 调用 Fleet API Vehicle Command Protocol (post-2023-10):
+ *   POST /api/1/vehicles/{vin}/command/{command}?vin={vin}
  *
  * 支持的命令：
  *   lock, unlock, climate_on, climate_off, sentry_on, sentry_off,
@@ -27,8 +28,8 @@ const FLEET_API_BASE = 'https://fleet-api.prd.cn.vn.cloud.tesla.cn'
 
 // 命令映射
 const COMMAND_MAP = {
-  lock: 'lock',
-  unlock: 'unlock',
+  lock: 'door_lock',
+  unlock: 'door_unlock',
   climate_on: 'climate_on',
   climate_off: 'climate_off',
   sentry_on: 'sentry_on',
@@ -98,25 +99,48 @@ exports.main = async (event, context) => {
     }
 
     // 如果没有 vehicleId，获取第一辆车
+    let vin = ''
     if (!vehicleId) {
       const listRes = await axios.get(`${FLEET_API_BASE}/api/1/vehicles`, {
         headers: { Authorization: `Bearer ${accessToken}` },
         timeout: 15000
       })
       const vehicles = listRes.data?.response || []
-      if (vehicles.length === 0) {
-        return { code: -3, message: '没有找到车辆' }
+      if (vehicles.length > 0) {
+        vehicleId = vehicles[0].id_s
+        vin = vehicles[0].vin
       }
-      vehicleId = vehicles[0].id_s
     }
 
-    // 调用 Tesla Fleet API 执行命令
-    // wake_up 路径不同，是 /api/1/vehicles/{id}/wake_up
+    // 已有 vehicleId 但无 VIN 时补充获取
+    if (!vin) {
+      try {
+        const listRes2 = await axios.get(`${FLEET_API_BASE}/api/1/vehicles`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          timeout: 15000
+        })
+        const vehicles2 = listRes2.data?.response || []
+        if (vehicles2.length > 0) {
+          vin = vehicles2[0].vin
+          if (!vehicleId) vehicleId = vehicles2[0].id_s
+        }
+      } catch (e) {
+        console.warn('[controlVehicle] 获取 VIN 失败:', e.message)
+      }
+    }
+ 
+    if (!vin) {
+      return { code: -3, message: '无法获取车辆 VIN' }
+    }
+
+    // 调用 Tesla Fleet API 执行命令（Vehicle Command Protocol）
     let url
     if (apiCommand === 'wake_up') {
-      url = `${FLEET_API_BASE}/api/1/vehicles/${vehicleId}/wake_up`
+      // wake_up 用数字 ID
+      url = `${FLEET_API_BASE}/api/1/vehicles/${vehicleId}/wake_up?vin=${vin}`
     } else {
-      url = `${FLEET_API_BASE}/api/1/vehicles/${vehicleId}/command/${apiCommand}`
+      // Vehicle Command Protocol: 必须使用 VIN
+      url = `${FLEET_API_BASE}/api/1/vehicles/${vin}/command/${apiCommand}?vin=${vin}`
     }
     const response = await axios.post(url, params || {}, {
       headers: {
@@ -127,6 +151,17 @@ exports.main = async (event, context) => {
     })
 
     const result = response.data?.response || {}
+
+    // wake_up 端点返回 response.state ("online"/"asleep")，而非 response.result
+    if (apiCommand === 'wake_up') {
+      const isOnline = result.state === 'online'
+      return {
+        code: 0,
+        result: isOnline,
+        message: isOnline ? '车辆已唤醒' : (result.state || '唤醒失败'),
+        rawResponse: result
+      }
+    }
 
     return {
       code: result.result === false ? -3 : 0,

@@ -87,7 +87,7 @@ exports.main = async (event, context) => {
           `client_id=${encodeURIComponent(TESLA_CLIENT_ID)}` +
           `&redirect_uri=${encodeURIComponent(OAUTH_REDIRECT_URI)}` +
           `&response_type=code` +
-          `&scope=${encodeURIComponent('openid offline_access user_data vehicle_device_data vehicle_cmds vehicle_charging_cmds')}` +
+          `&scope=${encodeURIComponent('openid offline_access user_data vehicle_device_data vehicle_cmds vehicle_charging_cmds vehicle_location')}` +
           `&state=${encodeURIComponent(state)}` +
           `&code_challenge=${encodeURIComponent(codeChallenge)}` +
           `&code_challenge_method=S256` +
@@ -263,7 +263,7 @@ exports.main = async (event, context) => {
             client_id: TESLA_CLIENT_ID,
             client_secret: TESLA_CLIENT_SECRET,
             audience: TESLA_AUDIENCE,
-            scope: 'openid vehicle_device_data vehicle_cmds vehicle_charging_cmds'
+            scope: 'openid vehicle_device_data vehicle_cmds vehicle_charging_cmds vehicle_location'
           }).toString(),
           { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 15000 }
         )
@@ -315,7 +315,7 @@ async function teslaPasswordLogin(email, password) {
       params: {
         client_id: TESLA_CLIENT_ID, code_challenge, code_challenge_method: 'S256',
         redirect_uri: FAKE_REDIRECT_URI, response_type: 'code',
-        scope: 'openid offline_access user_data vehicle_device_data vehicle_cmds vehicle_charging_cmds',
+        scope: 'openid offline_access user_data vehicle_device_data vehicle_cmds vehicle_charging_cmds vehicle_location',
         state, login_hint: email, locale: 'zh-CN'
       },
       headers: { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)', 'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'zh-CN,zh;q=0.9' },
@@ -332,7 +332,7 @@ async function teslaPasswordLogin(email, password) {
       params: {
         client_id: TESLA_CLIENT_ID, code_challenge, code_challenge_method: 'S256',
         redirect_uri: FAKE_REDIRECT_URI, response_type: 'code',
-        scope: 'openid offline_access user_data vehicle_device_data vehicle_cmds vehicle_charging_cmds',
+        scope: 'openid offline_access user_data vehicle_device_data vehicle_cmds vehicle_charging_cmds vehicle_location',
         state, locale: 'zh-CN'
       },
       data: new URLSearchParams({ ...formFields, identity: email, credential: password }).toString(),

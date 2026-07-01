@@ -5,9 +5,9 @@
 
   <!-- ====== Dashboard 页面 ====== -->
   <view class="page page-dashboard {{showSettings ? 'hidden' : ''}} {{isExpanded ? 'expand-active' : ''}}"
-    catchtouchstart="onTouchStart"
-    catchtouchmove="onTouchMove"
-    catchtouchend="onTouchEnd"
+    bindtouchstart="onTouchStart"
+    bindtouchmove="onTouchMove"
+    bindtouchend="onTouchEnd"
   >
     <view class="page-scroll">
 
@@ -15,10 +15,16 @@
       <view class="top-bar">
         <view class="top-left">
           <text class="car-name">{{modelName}}</text>
-          <view class="status-row" catchtap="{{isOnline ? '' : 'wakeUpVehicle'}}">
-            <view class="status-dot {{isOnline ? '' : 'offline'}}"></view>
-            <text class="status-text">{{isOnline ? '已连接' : '休眠中 - 点击唤醒'}}</text>
-            <text wx:if="{{!isOnline}}" class="wake-hint">点击唤醒</text>
+          <view class="status-row {{carStatus === 'sleeping' ? 'clickable' : ''}}" bindtap="onTapStatus">
+            <view class="status-dot {{carStatus === 'sleeping' ? 'offline' : ''}}"></view>
+            <text class="status-text">
+              <block wx:if="{{carStatus === 'sleeping'}}">休眠中</block>
+              <block wx:elif="{{carStatus === 'waking'}}">唤醒中...</block>
+              <block wx:elif="{{carStatus === 'parked'}}">已驻车</block>
+              <block wx:else>行车中</block>
+            </text>
+            <text wx:if="{{carStatus === 'sleeping'}}" class="wake-hint" bindtap="wakeUpVehicle">点击唤醒</text>
+            <view wx:elif="{{carStatus === 'waking'}}" class="waking-spinner"></view>
           </view>
         </view>
       </view>
@@ -81,11 +87,11 @@
               </view>
               <text class="ctrl-label {{climateOn ? 'label-on' : ''}}">空调</text>
             </view>
-            <view class="ctrl-btn off">
+            <view class="ctrl-btn off" bindtap="toggleTrunk">
               <view class="icon-circle"><van-icon name="arrow-up" size="36rpx" color="#fff" /></view>
               <text class="ctrl-label">后备箱</text>
             </view>
-            <view class="ctrl-btn off">
+            <view class="ctrl-btn off" bindtap="toggleHorn">
               <view class="icon-circle"><van-icon name="volume-o" size="36rpx" color="#fff" /></view>
               <text class="ctrl-label">鸣笛</text>
             </view>
@@ -125,11 +131,11 @@
               </view>
             </view>
             <scroll-view class="scroll-x" scroll-x enhanced show-scrollbar="{{false}}">
-              <view class="x-btn off">
+              <view class="x-btn off" bindtap="toggleTrunk">
                 <van-icon name="arrow-up" size="36rpx" color="#fff" />
                 <text class="x-label">后备箱</text>
               </view>
-              <view class="x-btn off">
+              <view class="x-btn off" bindtap="toggleHorn">
                 <van-icon name="volume-o" size="36rpx" color="#fff" />
                 <text class="x-label">鸣笛</text>
               </view>
