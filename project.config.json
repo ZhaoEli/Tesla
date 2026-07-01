@@ -42,7 +42,7 @@
   "appid": "wx8919a7c332ae50eb",
   "projectname": "tesla-key",
   "libVersion": "3.7.5",
-  "cloudfunctionTemplateRoot": "",
+  "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
   "condition": {},
   "compileType": "miniprogram",
   "simulatorPluginLibVersion": {},

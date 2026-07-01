@@ -20,8 +20,10 @@ const db = cloud.database()
 
 const axios = require('axios')
 
-const config = (() => { try { return require('../../config') } catch (e) { return { tesla: {} } } })()
-const FLEET_API_BASE = config.tesla.audience || 'https://fleet-api.prd.na.tesla.com'
+// 内联密钥配置，与 teslaAuth 云函数保持一致
+const TESLA_CLIENT_ID = '3c92b641-0a9f-40d2-adea-5cad6eb0a70f'
+const TESLA_CLIENT_SECRET = 'ta-secret.ql%kwzB!OC_KL-Is'
+const FLEET_API_BASE = 'https://fleet-api.prd.cn.vn.cloud.tesla.cn'
 
 // 命令映射
 const COMMAND_MAP = {
@@ -39,7 +41,8 @@ const COMMAND_MAP = {
   honk_horn: 'honk_horn',
   flash_lights: 'flash_lights',
   charge_start: 'charge_start',
-  charge_stop: 'charge_stop'
+  charge_stop: 'charge_stop',
+  wake_up: 'wake_up'
 }
 
 exports.main = async (event, context) => {
@@ -108,7 +111,13 @@ exports.main = async (event, context) => {
     }
 
     // 调用 Tesla Fleet API 执行命令
-    const url = `${FLEET_API_BASE}/api/1/vehicles/${vehicleId}/command/${apiCommand}`
+    // wake_up 路径不同，是 /api/1/vehicles/{id}/wake_up
+    let url
+    if (apiCommand === 'wake_up') {
+      url = `${FLEET_API_BASE}/api/1/vehicles/${vehicleId}/wake_up`
+    } else {
+      url = `${FLEET_API_BASE}/api/1/vehicles/${vehicleId}/command/${apiCommand}`
+    }
     const response = await axios.post(url, params || {}, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -146,16 +155,12 @@ exports.main = async (event, context) => {
  * 刷新 access_token
  */
 async function refreshAccessToken(refreshToken) {
-  const TESLA_CLIENT_ID = config.tesla.clientId || '1d4e868c-148f-421e-bd6a-3ad1c8549692'
-  const TESLA_CLIENT_SECRET = config.tesla.clientSecret || 'ta-secret.p7_dY+t_j-&NkY^M'
-  const TESLA_AUDIENCE = config.tesla.audience || 'https://fleet-api.prd.na.tesla.com'
-
   const res = await axios.post('https://auth.tesla.cn/oauth2/v3/token', {
     grant_type: 'refresh_token',
     client_id: TESLA_CLIENT_ID,
     client_secret: TESLA_CLIENT_SECRET,
     refresh_token: refreshToken,
-    audience: TESLA_AUDIENCE
+    audience: FLEET_API_BASE
   }, {
     headers: { 'Content-Type': 'application/json' },
     timeout: 15000

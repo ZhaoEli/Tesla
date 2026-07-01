@@ -15,19 +15,29 @@
       <view class="top-bar">
         <view class="top-left">
           <text class="car-name">{{modelName}}</text>
-          <view class="status-row">
-            <view class="status-dot"></view>
-            <text class="status-text">已连接</text>
+          <view class="status-row" catchtap="{{isOnline ? '' : 'wakeUpVehicle'}}">
+            <view class="status-dot {{isOnline ? '' : 'offline'}}"></view>
+            <text class="status-text">{{isOnline ? '已连接' : '休眠中 - 点击唤醒'}}</text>
+            <text wx:if="{{!isOnline}}" class="wake-hint">点击唤醒</text>
           </view>
         </view>
       </view>
 
-      <!-- 续航 -->
+      <!-- 续航 & 充电信息 -->
       <view class="range-area">
         <text class="range-num">{{rangeKm}} km</text>
         <view class="battery-row">
           <van-icon name="success" size="28rpx" color="#00d084" />
           <text class="battery-text">{{batteryLevel}}% 电量</text>
+          <text wx:if="{{chargingState === 'Charging'}}" class="charging-badge">充电中</text>
+          <text wx:elif="{{chargingState === 'Complete'}}" class="charged-badge">已充满</text>
+        </view>
+        <view wx:if="{{chargingState === 'Charging' && minutesToFullCharge > 0}}" class="charge-info">
+          <text class="charge-info-text">剩余 {{minutesToFullCharge}} 分钟充满</text>
+        </view>
+        <view wx:if="{{outsideTemp != null || insideTemp != null}}" class="temp-row">
+          <text wx:if="{{insideTemp != null}}" class="temp-text">车内 {{insideTemp}}°C</text>
+          <text wx:if="{{outsideTemp != null}}" class="temp-text"> / 车外 {{outsideTemp}}°C</text>
         </view>
       </view>
 
@@ -181,19 +191,67 @@
           </view>
 
           <view wx:else class="set-card-body">
-            <view class="oauth-intro">
-              <van-icon name="info-o" size="32rpx" color="rgba(255,255,255,0.5)" />
-              <text class="oauth-intro-text">点击下方按钮，跳转到 Tesla 官方登录页面完成授权</text>
+            <view class="oauth-tabs">
+              <view class="tab-item {{oauthTab === 'web' ? 'active' : ''}}" bindtap="switchOauthTab" data-tab="web">网页授权</view>
+              <view class="tab-item {{oauthTab === 'password' ? 'active' : ''}}" bindtap="switchOauthTab" data-tab="password">账号登录</view>
             </view>
-            <view class="btn-oauth" bindtap="startTeslaOAuth">
-              <van-icon name="shield-o" size="36rpx" color="#e82127" />
-              <text>绑定特斯拉账号</text>
-              <van-icon name="arrow" size="28rpx" color="rgba(255,255,255,0.3)" />
+
+            <!-- WebView OAuth 方式 -->
+            <view wx:if="{{oauthTab === 'web'}}">
+              <view class="oauth-intro">
+                <van-icon name="info-o" size="32rpx" color="rgba(255,255,255,0.5)" />
+                <text class="oauth-intro-text">点击下方按钮，跳转到 Tesla 官方登录页面完成授权</text>
+              </view>
+              <view class="btn-oauth" bindtap="startTeslaOAuth">
+                <van-icon name="shield-o" size="36rpx" color="#e82127" />
+                <text>绑定特斯拉账号</text>
+                <van-icon name="arrow" size="28rpx" color="rgba(255,255,255,0.3)" />
+              </view>
+              <view class="oauth-tips">
+                <text class="tip-item">• 使用 Tesla 官方账号授权登录，支持两步验证</text>
+                <text class="tip-item">• 支持远程锁车、空调、哨兵等控制</text>
+                <text class="tip-item">• 车辆数据通过 Tesla Fleet API 实时同步</text>
+              </view>
             </view>
-            <view class="oauth-tips">
-              <text class="tip-item">• 使用 Tesla 官方账号授权登录，支持两步验证</text>
-              <text class="tip-item">• 支持远程锁车、空调、哨兵等控制</text>
-              <text class="tip-item">• 车辆数据通过 Tesla Fleet API 实时同步</text>
+
+            <!-- 邮箱+密码直登方式 -->
+            <view wx:if="{{oauthTab === 'password'}}">
+              <view class="oauth-intro">
+                <van-icon name="info-o" size="32rpx" color="rgba(255,255,255,0.5)" />
+                <text class="oauth-intro-text">直接输入 Tesla 账号和密码完成绑定（无需跳转网页）</text>
+              </view>
+              <view class="password-form">
+                <view class="form-field">
+                  <van-icon name="envelop-o" size="36rpx" color="rgba(255,255,255,0.5)" />
+                  <input
+                    class="form-input"
+                    type="text"
+                    placeholder="Tesla 账号邮箱"
+                    placeholder-class="form-placeholder"
+                    value="{{teslaEmailInput}}"
+                    bindinput="onTeslaEmailInput"
+                  />
+                </view>
+                <view class="form-field">
+                  <van-icon name="closed-eye" size="36rpx" color="rgba(255,255,255,0.5)" />
+                  <input
+                    class="form-input"
+                    type="password"
+                    placeholder="Tesla 账号密码"
+                    placeholder-class="form-placeholder"
+                    value="{{teslaPassword}}"
+                    bindinput="onTeslaPasswordInput"
+                  />
+                </view>
+              </view>
+              <view class="btn-oauth" bindtap="onPasswordLogin">
+                <van-icon name="contact" size="36rpx" color="#e82127" />
+                <text>直接绑定 Tesla 账号</text>
+              </view>
+              <view class="oauth-tips">
+                <text class="tip-item">• 仅在云函数端模拟登录，密码不会存储在本地</text>
+                <text class="tip-item">• 如开启了两步验证，请使用网页授权方式</text>
+              </view>
             </view>
           </view>
 

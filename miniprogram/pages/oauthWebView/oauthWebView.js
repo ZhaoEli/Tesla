@@ -44,10 +44,12 @@ Page({
           loading: false
         })
       } else {
+        const detailMsg = res.result?.error || res.result?.message || '获取授权链接失败'
+        console.error('[OAuthWebView] 生成URL失败-详情:', detailMsg)
         this.setData({
           loading: false,
           showError: true,
-          errorMsg: res.result?.message || '获取授权链接失败'
+          errorMsg: detailMsg
         })
       }
     }).catch(err => {
@@ -125,6 +127,24 @@ Page({
         if (prevPage && prevPage.onTeslaBound) {
           prevPage.onTeslaBound(res.result.data)
         }
+
+        // ===== 自动注册 Partner Account（后台静默执行，不阻塞） =====
+        wx.cloud.callFunction({
+          name: 'teslaAuth',
+          data: { action: 'register' }
+        }).then(regRes => {
+          if (regRes.result && regRes.result.code === 0) {
+            console.log('[OAuthWebView] Partner Account 注册成功')
+            // 通知 index 页刷新车辆数据
+            if (prevPage && prevPage.refreshVehicleData) {
+              setTimeout(() => prevPage.refreshVehicleData(), 500)
+            }
+          } else {
+            console.warn('[OAuthWebView] Partner Account 注册失败:', regRes.result?.message)
+          }
+        }).catch(regErr => {
+          console.error('[OAuthWebView] Partner Account 注册异常:', regErr)
+        })
 
         // 返回上一页
         setTimeout(() => {
