@@ -96,8 +96,7 @@ exports.main = async (event, context) => {
       `${FLEET_API_BASE}/api/1/vehicles/${vin}/vehicle_data`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
-        timeout: 30000,
-        params: { endpoints: 'location;chargeState;climateState;vehicleState;guiSettings;driveState' }
+        timeout: 30000
       }
     )
 
