@@ -2,13 +2,15 @@
 //
 // 流程：
 //   1. onLoad: 调用 teslaAuth 云函数获取 OAuth 授权 URL
-//   2. 打开 web-view 加载 Tesla 登录页
+//   2. 通过中转页面加载 Tesla 登录页（解决真机 web-view 域名白名单问题）
 //   3. 用户登录并授权后，Tesla 重定向到回调页（云开发静态托管）
 //   4. 回调页从 URL 提取 code，通过 postMessage 发送给小程序
 //   5. 小程序收到 code 后调 teslaAuth exchangeCode 换 token
 //   6. 通知上一页更新状态
 //
 const app = getApp()
+
+const PUBLIC_DOMAIN = 'tesla-oauth-callback-cloudbase-d1gpcr29e89cb8086.webapps.tcloudbase.com'
 
 Page({
   data: {
@@ -39,8 +41,11 @@ Page({
       }
     }).then(res => {
       if (res.result && res.result.code === 0) {
+        const realAuthUrl = res.result.data.authUrl
+        // 使用中转页面加载 Tesla 授权 URL，避免真机 web-view 限制
+        const proxyUrl = `https://${PUBLIC_DOMAIN}/tesla_auth.html?url=${encodeURIComponent(realAuthUrl)}`
         this.setData({
-          authUrl: res.result.data.authUrl,
+          authUrl: proxyUrl,
           loading: false
         })
       } else {
