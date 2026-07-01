@@ -65,42 +65,38 @@ exports.main = async (event, context) => {
       }
     }
 
-    // 如果没有 vehicleId，先获取车辆列表
-    if (!vehicleId) {
+    // 获取 VIN（vehicle_data 需要使用 VIN 而不是数字 ID）
+    let vin = ''
+    try {
       const listRes = await axios.get(`${FLEET_API_BASE}/api/1/vehicles`, {
         headers: { Authorization: `Bearer ${accessToken}` },
         timeout: 15000
       })
       const vehicles = listRes.data?.response || []
-      if (vehicles.length === 0) {
+      if (vehicles.length > 0) {
+        vin = vehicles[0].vin
+        if (!vehicleId || vehicleId === 'mock') {
+          vehicleId = vehicles[0].id_s
+        }
+      } else {
         return { code: -3, message: '没有找到车辆' }
       }
-      vehicleId = vehicles[0].id_s
-    }
-
-    // mock 车辆直接返回模拟数据
-    if (vehicleId === 'mock') {
-      return {
-        code: 0,
-        data: {
-          display_name: 'Model 3',
-          vin: 'LRW3E7FS0NC123456',
-          state: 'online',
-          charge_state: { battery_level: 78, battery_range: 310.75, charging_state: 'Disconnected', charge_limit_soc: 90, charge_port_door_open: false },
-          vehicle_state: { odometer: 9466, locked: true, sentry_mode: false },
-          climate_state: { inside_temp: 26, outside_temp: 32, is_climate_on: false },
-          drive_state: { latitude: 30.2741, longitude: 120.1551 }
-        },
-        vehicleId: 'mock'
+    } catch (e) {
+      // 如果获取列表失败，但有传入 vehicleId，仍然尝试获取
+      if (!vehicleId || vehicleId === 'mock') {
+        return { code: -1, message: '获取车辆列表失败', error: e.message }
       }
     }
 
-    // 调用 Tesla Fleet API 获取车辆详细数据
+    // 调用 Tesla Fleet API 获取车辆详细数据（必须使用 VIN）
+    if (!vin) {
+      return { code: -1, message: '无法获取车辆 VIN' }
+    }
     const response = await axios.get(
-      `${FLEET_API_BASE}/api/1/vehicles/${vehicleId}/vehicle_data`,
+      `${FLEET_API_BASE}/api/1/vehicles/${vin}/vehicle_data`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
-        timeout: 30000, // 车辆可能休眠，需要等待唤醒
+        timeout: 30000,
         params: { endpoints: 'location;chargeState;climateState;vehicleState;guiSettings;driveState' }
       }
     )
